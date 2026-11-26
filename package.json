@@ -1,0 +1,29 @@
+{
+  "name": "first-200",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "node server/index.js",
+    "test": "node --test",
+    "setup:local": "node scripts/setup-local.mjs",
+    "dev:qa": "vite --mode qa",
+    "dev:pilot": "vite --mode pilot",
+    "verify:qa": "node scripts/verify-qa.mjs"
+  },
+  "dependencies": {
+    "@flagsmith/flagsmith": "^12.4.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.0",
+    "playwright-core": "^1.65.1",
+    "vite": "^8.0.0"
+  }
+}

@@ -1,0 +1,56 @@
+name: first-200-judge
+
+x-flagsmith: &flagsmith
+  image: docker.flagsmith.com/flagsmith/flagsmith@sha256:48905c664152d8ae2c843ec9cee72ff197e7caff6e91b959bb851a235915ea35
+  environment:
+    DATABASE_URL: postgresql://postgres:first200-local@postgres:5432/flagsmith
+    USE_POSTGRES_FOR_ANALYTICS: 'true'
+    ENVIRONMENT: production
+    DJANGO_ALLOWED_HOSTS: '127.0.0.1,localhost'
+    FLAGSMITH_DOMAIN: '127.0.0.1:${FIRST_200_FLAGSMITH_PORT:-18180}'
+    DJANGO_SECRET_KEY: first200-local-django
+    WAREHOUSE_CREDENTIALS_SECRET: first200-local-warehouse
+    TASK_RUN_METHOD: TASK_PROCESSOR
+    EXPERIMENTATION_ENABLED: 'true'
+
+services:
+  postgres:
+    image: postgres@sha256:934be6ae0a5bce0f607a5edc437e6bd606c074e595c28d4897845d6502823104
+    environment:
+      POSTGRES_PASSWORD: first200-local
+      POSTGRES_DB: flagsmith
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-d', 'flagsmith', '-U', 'postgres']
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  migrate:
+    <<: *flagsmith
+    command: [migrate]
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  flagsmith:
+    <<: *flagsmith
+    command: [serve]
+    ports:
+      - '127.0.0.1:${FIRST_200_FLAGSMITH_PORT:-18180}:8000'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  processor:
+    <<: *flagsmith
+    command: [run-task-processor]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  database:
